@@ -1,7 +1,0 @@
-D:\OwnCloud\Code\builds\RadarrLinkMonitor\RadarrLinkMonitor.exe
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\RadarrLinkMonitor.csprojAssemblyReference.cache
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\Interop.IWshRuntimeLibrary.dll
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\RadarrLinkMonitor.csproj.ResolveComReference.cache
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\RadarrLinkMonitor.csproj.CoreCompileInputs.cache
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\RadarrLinkMonitor.csproj.CopyComplete
-D:\Code\RadarrLinkMonitor\RadarrLinkMonitor\obj\x86\Release\RadarrLinkMonitor.exe
