@@ -15,6 +15,7 @@ namespace ServarrLinkMonitor
         public List<replacement> replacements = new List<replacement>();
 
         public string instanceName = "Replacearr";
+        public string apiPath = "api/v3/";
 
         public string ServarrURL;
         public string ServarrAPI;

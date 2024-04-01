@@ -35,7 +35,7 @@ namespace ServarrLinkMonitor
             if (!Settings.ServarrURL.EndsWith("/")) { Settings.ServarrURL += "/"; }
 
             Console.Out.WriteLine("Servarr Link Monitor - checking " + Settings.ServarrURL + " for new files");
-            string URL = Settings.ServarrURL + "api/v3/history?page=1&pageSize=" + Settings.ServarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.ServarrAPI;
+            string URL = Settings.ServarrURL + Settings.apiPath + "history?page=1&pageSize=" + Settings.ServarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.ServarrAPI;
 
             
 
