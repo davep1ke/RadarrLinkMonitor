@@ -16,16 +16,21 @@ namespace RadarrLinkMonitor
     {
 
 
-        static void Main(string[] args)
+        static void Main()
         {
             RadarrLinkMonitor.CreateObject();
         }
 
         private static void CreateObject()
         {
+            
             settings Settings = settings.load();
+            if (!Settings.RadarrURL.EndsWith("/")) { Settings.RadarrURL += "/"; }
 
-            string URL = Settings.RadarrURL + "/api/history?page=1&pageSize=" + Settings.RadarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.RadarrAPI;
+            Console.Out.WriteLine("Radarr Link Monitor - checking " + Settings.RadarrURL + " for new files");
+            string URL = Settings.RadarrURL + "api/v3/history?page=1&pageSize=" + Settings.RadarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.RadarrAPI;
+
+            
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(URL);
             request.Method = "GET";
@@ -40,117 +45,112 @@ namespace RadarrLinkMonitor
                 {
                     if (webStream != null)
                     {
-                        using (StreamReader responseReader = new StreamReader(webStream))
+                        using StreamReader responseReader = new(webStream);
+                        string response = responseReader.ReadToEnd();
+
+
+                        JsonDocument jo = JsonDocument.Parse(response);
+
+                        //Console.Write(jo.RootElement.First);  
+
+
+                        //open the response and parse it using JSON. Query for newly imported files
+
+                        foreach (JsonElement element in jo.RootElement.GetProperty("records").EnumerateArray())
                         {
-                            string response = responseReader.ReadToEnd();
-
-
-                            JsonDocument jo = JsonDocument.Parse(response);
-
-                            //Console.Write(jo.RootElement.First);  
-
-
-                            //open the response and parse it using JSON. Query for newly imported files
-
-                            foreach (JsonElement element in jo.RootElement.GetProperty("records").EnumerateArray())
+                            try
                             {
-                                try
+                                //.SelectTokens("records[*].data.importedPath")) 
+                                string title = element.GetProperty("sourceTitle").ToString();
+                                JsonElement elData = element.GetProperty("data");
+
+                                bool success = elData.TryGetProperty("importedPath", out JsonElement elImportPath);
+                                if (!success)
                                 {
-                                    //.SelectTokens("records[*].data.importedPath")) 
-                                    string title = element.GetProperty("sourceTitle").ToString();
-                                    JsonElement elData = element.GetProperty("data");
-                                    
-                                    JsonElement elImportPath;
-                                    bool success = elData.TryGetProperty("importedPath", out elImportPath);
-                                    if (!success) 
-                                    { 
-                                            
-                                        Console.Out.WriteLine("No import path for " + title + " - failed / still processing?"); 
-                                    
+                                    Console.Out.WriteLine("No import path for " + title + " - failed / still processing?");
+                                }
+                                else
+                                {
+
+                                    string importPath = elImportPath.ToString();
+
+                                    //go through these and create the link. 
+                                    bool found = false;
+                                    foreach (grabbedFile g in Settings.recentGrabs)
+                                    {
+                                        if (g.filename == importPath) { found = true; }
+                                    }
+
+                                    if (found == true)
+                                    {
+                                        Console.Out.WriteLine("Already processed " + importPath);
                                     }
                                     else
                                     {
+                                        Console.Out.WriteLine("Processing        " + importPath);
 
-                                        string importPath = elImportPath.ToString();
+                                        //Work out the filename
+                                        string filename = Path.GetFileNameWithoutExtension(importPath);
 
-                                        //go through these and create the link. 
-                                        bool found = false;
-                                        foreach (grabbedFile g in Settings.recentGrabs)
+                                        //invalid chars
+                                        foreach (char invalidchar in System.IO.Path.GetInvalidFileNameChars())
                                         {
-                                            if (g.filename == importPath) { found = true; }
+                                            filename = filename.Replace(invalidchar, '_');
                                         }
 
-                                        if (found == true)
+                                        filename = Settings.destinationFolder + @"\" + filename + ".lnk";
+
+                                        //apply any replacements to the path
+                                        string destination = importPath;
+                                        foreach (replacement r in Settings.replacements)
                                         {
-                                            Console.Out.WriteLine("Already processed " + importPath);
+                                            destination = destination.Replace(r.source, r.replace);
                                         }
-                                        else
+                                        //replace unix paths with windows ones.
+                                        destination = destination.Replace(@"/", @"\");
+
+                                        //TODO - for linux use mslink.sh http://www.mamachine.org/mslink/index.en.html 
+
+                                        //craete the link file. 
+                                        var wsh = new IWshShell_Class();
+                                        try
                                         {
-                                            Console.Out.WriteLine("Processing        " + importPath);
-
-                                            //Work out the filename
-                                            string filename = Path.GetFileNameWithoutExtension(importPath);
-
-                                            //invalid chars
-                                            foreach (char invalidchar in System.IO.Path.GetInvalidFileNameChars())
-                                            {
-                                                filename = filename.Replace(invalidchar, '_');
-                                            }
-
-                                            filename = Settings.destinationFolder + @"\" + filename + ".lnk";
-
-                                            //apply any replacements to the path
-                                            string destination = importPath;
-                                            foreach (replacement r in Settings.replacements)
-                                            {
-                                                destination = destination.Replace(r.source, r.replace);
-                                            }
-                                            //replace unix paths with windows ones.
-                                            destination = destination.Replace(@"/", @"\");
-
-                                            //for linux use mslink.sh http://www.mamachine.org/mslink/index.en.html 
-
-                                            //craete the link file. 
-                                            var wsh = new IWshShell_Class();
-                                            try
-                                            {
-                                                IWshRuntimeLibrary.IWshShortcut shortcut = wsh.CreateShortcut(filename) as IWshRuntimeLibrary.IWshShortcut;
-                                                shortcut.TargetPath = destination;
-                                                shortcut.Save();
-                                            }
-
-                                            catch (Exception e)
-                                            {
-
-                                                Console.Out.WriteLine("--------Failed to create shortcut---------");
-                                                Console.Out.WriteLine(filename);
-                                                Console.Out.WriteLine(e.Message);
-                                                Console.Out.WriteLine(e.InnerException);
-                                                Console.Out.WriteLine(e.StackTrace);
-                                                Console.Out.WriteLine("-----------------");
-
-                                            }
-                                            //log it
-                                            Settings.recentGrabs.Add(new grabbedFile(importPath));
+                                            IWshRuntimeLibrary.IWshShortcut shortcut = wsh.CreateShortcut(filename) as IWshRuntimeLibrary.IWshShortcut;
+                                            shortcut.TargetPath = destination;
+                                            shortcut.Save();
                                         }
+
+                                        catch (Exception e)
+                                        {
+
+                                            Console.Out.WriteLine("--------Failed to create shortcut---------");
+                                            Console.Out.WriteLine(filename);
+                                            Console.Out.WriteLine(e.Message);
+                                            Console.Out.WriteLine(e.InnerException);
+                                            Console.Out.WriteLine(e.StackTrace);
+                                            Console.Out.WriteLine("-----------------");
+
+                                        }
+                                        //log it
+                                        Settings.recentGrabs.Add(new grabbedFile(importPath));
                                     }
                                 }
-                                catch (Exception e)
-                                {
+                            }
+                            catch (Exception e)
+                            {
 
-                                    Console.Out.WriteLine("-----Failed to parse record------------");
-                                    Console.Out.WriteLine(e.Message);
-                                    Console.Out.WriteLine(e.InnerException);
-                                    Console.Out.WriteLine(e.StackTrace);
-                                    Console.Out.WriteLine("-----------------");
-
-                                }
+                                Console.Out.WriteLine("-----Failed to parse record------------");
+                                Console.Out.WriteLine(e.Message);
+                                Console.Out.WriteLine(e.InnerException);
+                                Console.Out.WriteLine(e.StackTrace);
+                                Console.Out.WriteLine("-----------------");
 
                             }
-                            
+
                         }
                     }
                 }
+                Console.Out.WriteLine("Radarr Link Monitor completed, saving and exiting.");
                 Settings.save();
             }
             catch (Exception e)
