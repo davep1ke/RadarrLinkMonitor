@@ -10,25 +10,32 @@ using System.Linq;
 using System.Xml.Linq;
 using System.Text.Json;
 
-namespace RadarrLinkMonitor
+namespace ServarrLinkMonitor
 {
-    public class RadarrLinkMonitor
+    public class ServarrLinkMonitor
     {
 
 
-        static void Main()
+        static void Main(string[] args)
         {
-            RadarrLinkMonitor.CreateObject();
+            if (args.Length != 0)
+            {
+                ServarrLinkMonitor.CreateObject(args[0]);
+            }
+            else
+            {
+                Console.WriteLine("Pass in the name of a Servarr Instance (e.g. Sonarr)");
+            }
         }
 
-        private static void CreateObject()
+        private static void CreateObject(string instanceName)
         {
             
-            settings Settings = settings.load();
-            if (!Settings.RadarrURL.EndsWith("/")) { Settings.RadarrURL += "/"; }
+            settings Settings = settings.load(instanceName);
+            if (!Settings.ServarrURL.EndsWith("/")) { Settings.ServarrURL += "/"; }
 
-            Console.Out.WriteLine("Radarr Link Monitor - checking " + Settings.RadarrURL + " for new files");
-            string URL = Settings.RadarrURL + "api/v3/history?page=1&pageSize=" + Settings.RadarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.RadarrAPI;
+            Console.Out.WriteLine("Servarr Link Monitor - checking " + Settings.ServarrURL + " for new files");
+            string URL = Settings.ServarrURL + "api/v3/history?page=1&pageSize=" + Settings.ServarrMaxHistory + "&sortkey=date&sortDir=desc&apikey=" + Settings.ServarrAPI;
 
             
 
@@ -150,7 +157,7 @@ namespace RadarrLinkMonitor
                         }
                     }
                 }
-                Console.Out.WriteLine("Radarr Link Monitor completed, saving and exiting.");
+                Console.Out.WriteLine("Servarr Link Monitor completed, saving and exiting.");
                 Settings.save();
             }
             catch (Exception e)

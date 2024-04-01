@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ServarrLinkMonitor": {
+      "commandName": "Project",
+      "commandLineArgs": "Radarr"
+    }
+  }
+}

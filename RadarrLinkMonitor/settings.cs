@@ -7,27 +7,28 @@ using System.Xml;
 using System.Xml.Serialization;
 
 
-namespace RadarrLinkMonitor
+namespace ServarrLinkMonitor
 {
     public class settings
     {
         public List<grabbedFile> recentGrabs = new List<grabbedFile>();
         public List<replacement> replacements = new List<replacement>();
 
-        public string RadarrURL; //todo, make sure no trailing '/'
-        public string RadarrAPI;
+        public string instanceName = "Replacearr";
+
+        public string ServarrURL;
+        public string ServarrAPI;
         public string destinationFolder; //todo, make sure no trailing '/'
-        public int RadarrMaxHistory = 200;
+        public int ServarrMaxHistory = 200;
 
-        public static string foldername = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\RadarrLinkMonitor\";
-        private static string filename = foldername + "sett.ings";
+        public static string foldername = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\ServarrLinkMonitor\";
 
-        public static settings load()
+        public static settings load(string instance)
         {
             try
             {
                 XmlSerializer deserializer = new XmlSerializer(typeof(settings));
-                TextReader textReader = new StreamReader(filename);
+                TextReader textReader = new StreamReader(foldername + instance + ".xml");
                 settings setts = (settings)deserializer.Deserialize(textReader);
                 textReader.Close();
                 setts.trimHistory();
@@ -46,9 +47,10 @@ namespace RadarrLinkMonitor
 
                     #region populate defaults
                     // TODO remove
-                    sets.RadarrURL = "http://<RadarrPath>:<Port>";
-                    sets.RadarrAPI = "<API>";
+                    sets.ServarrURL = @"http://<ServarrPath>:<Port>";
+                    sets.ServarrAPI = @"<API>";
                     sets.destinationFolder = @"C:\temp";
+                    sets.instanceName = instance;
                    
                     sets.replacements.Add(new replacement(@"Drive:\Path", @"\\server\share\"));
                     sets.save();
@@ -70,7 +72,7 @@ namespace RadarrLinkMonitor
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(settings));
-            TextWriter textWriter = new StreamWriter(filename);
+            TextWriter textWriter = new StreamWriter(foldername + instanceName + ".xml");
             serializer.Serialize(textWriter, this);
             textWriter.Close();
         }

@@ -4,10 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <Configurations>Debug;Release</Configurations>
-    <StartupObject>RadarrLinkMonitor.RadarrLinkMonitor</StartupObject>
+    <StartupObject>ServarrLinkMonitor.ServarrLinkMonitor</StartupObject>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <BaseOutputPath>D:\owncloud\Code\builds\ServarrLinkMonitor</BaseOutputPath>
 
   </PropertyGroup>
 
